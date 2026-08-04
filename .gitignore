@@ -1,0 +1,4 @@
+venv/
+*.csv
+!music_info_clean.csv
+*.zip
