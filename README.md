@@ -1,74 +1,53 @@
-# Ethical Music Recommendation Engine — Interface
+# Ethical Music Recommendation Engine 
 
-Streamlit interface for the group project. This folder is Member 4's
-(Interface & Integration) deliverable.
+This project is a music recommendation system that recommends songs to users based on the listening behaviour of similar users. The system uses user-based collaborative filtering and cosine similarity to identify users with similar listening patterns.
 
-## Setup
+The system uses a user-song interaction matrix containing users' play counts. After identifying users similar to a selected target user, it recommends songs listened to by those users that the target user has not previously listened to. Candidate songs are ranked using their recommendation scores, and the highest-ranked songs are returned to the user.
 
-```bash
-pip install -r requirements.txt
-```
+Setup and Installation:
+1. Clone the repository
+git clone <repository-url>
+cd AI-FINAL
 
-Make sure these four files are in this same folder:
-- `music_info_clean.csv`
-- `interaction_matrix.npz`
-- `user_ids.npy`
-- `track_ids.npy`
+3. Create a virtual environment
+python -m venv .venv
 
-## Run
+5. Activate the virtual environment
+Windows:.venv\Scripts\activate
 
-```bash
-streamlit run app.py
-```
+7. Install the required libraries
+pip install pandas numpy scipy scikit-learn
 
-Opens at `http://localhost:8501`.
 
-## What's here
+How to Run the System:
+Open the project folder in VS Code.
+Activate the .venv virtual environment.
+Open the recommendation system notebook in the notebooks folder.
+Select the .venv Python kernel.
+Run the notebook cells in order.
+Select a target user and generate recommendations.
 
-- **`app.py`** — the UI. Two tabs:
-  - **Recommendations**: pick a user ID, get top-N songs, optionally view
-    their listening history, play 30s previews inline.
-  - **Browse Library**: search/filter the full song catalog by name,
-    artist, genre, year.
-- **`recommendation_engine.py`** — Member 2's real user-based collaborative
-  filtering (cosine similarity over the interaction matrix), extracted
-  from their notebook into an importable module.
-- **`recommender_interface.py`** — glue layer between Member 2's raw output
-  and what `app.py` expects. Enriches each recommendation with
-  genre/year/tags/preview URL by joining back to `music_info_clean.csv`.
-- **`test_recommender_contract.py`** — run this any time the recommender
-  changes, to check it still returns what the UI expects before you demo:
-  ```
-  python test_recommender_contract.py
-  ```
+Usage Example:
 
-## Resolved: song index mapping
+A target user can be selected from the available user IDs:
 
-Earlier drafts of this app used a fake column→track_id mapping since that
-file didn't exist yet. Member 2 has since provided `user_ids.npy` and
-`track_ids.npy`, which give the real mapping — the interface now uses
-those directly (29,915 of 29,922 track_ids matched `music_info_clean.csv`
-on first check; the ~7 unmatched are skipped gracefully, same as Member
-2's own code does).
+target_user = user_ids[0]
 
-## Note on User IDs
+recommendations = recommend_for_user(
+    target_user,
+    top_users=5,
+    top_songs=5
+)
 
-User IDs are string hashes (e.g.
-`6beb4699102775dab57aa406c5ea1217c4ff4869`), not simple integers — this
-matches how Member 2's model identifies users. The UI has a "pick a
-random user" button plus a text field for pasting a specific ID.
+for i, song in enumerate(recommendations, start=1):
+    print(f"{i}. {song['song']} - {song['artist']}")
 
-## Team contract (for Member 2)
+Example output:
 
-Your function should match this signature:
+1. Quiet Little Voices - We Were Promised Jetpacks
+2. Ice Monster - Minus the Bear
+3. That Should Be Me - Justin Bieber
+4. The Killing Hand - Dream Theater
+5. Don't Get Cute - Kurt Vile
 
-```python
-def get_recommendations(user_id: int, top_n: int = 10) -> list[dict]:
-    """
-    Returns a list of dicts, each with at least:
-    track_id, name, artist, genre, year, tags, spotify_preview_url, score
-    """
-```
-
-Drop your real implementation into `recommender_interface.py` in place of
-the current placeholder — nothing in `app.py` needs to change.
+The system identifies users with similar listening patterns using cosine similarity and recommends songs from those users that the target user has not previously listened to.
