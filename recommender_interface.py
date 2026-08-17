@@ -7,8 +7,7 @@ import recommendation_engine as engine
 
 DATA_DIR = Path(__file__).parent
 
-DEFAULT_TOP_USERS = 5  # number of similar users to base it on
-
+DEFAULT_TOP_USERS = 5  
 
 @lru_cache(maxsize=1)
 def _load_music_info() -> pd.DataFrame:
