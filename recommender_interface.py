@@ -1,31 +1,3 @@
-"""
-recommender_interface.py
-=========================
-Bridges Member 2's real recommendation_engine.py to the contract app.py
-expects. This is the ONLY file that changes when the recommender changes —
-app.py never needs to know how recommendations are actually generated.
-
-STATUS: now wired to the REAL collaborative-filtering engine
-(recommendation_engine.py — user-based cosine similarity), replacing the
-earlier popularity-based placeholder.
-
-IMPORTANT CHANGE from the placeholder version: user_id is now a STRING
-hash (e.g. "6beb4699102775dab57aa406c5ea1217c4ff4869"), matching the real
-user_ids.npy file — NOT an integer index 0..n_users-1. app.py's UI has
-been updated to match (see the "pick a random user" / text-input flow).
-
-CONTRACT (unchanged)
----------------------
-    get_recommendations(user_id: str, top_n: int = 10) -> list[dict]
-
-    Each dict has:
-        track_id, name, artist, genre, year, tags, spotify_preview_url, score
-
-    Member 2's raw output only has {track_id, song, artist, score} — this
-    module renames "song" -> "name" and enriches every result with genre,
-    year, tags, and spotify_preview_url by joining back to
-    music_info_clean.csv on track_id.
-"""
 
 from functools import lru_cache
 from pathlib import Path
@@ -36,7 +8,7 @@ import recommendation_engine as engine
 
 DATA_DIR = Path(__file__).parent
 
-DEFAULT_TOP_USERS = 5  # how many similar users to base recommendations on
+DEFAULT_TOP_USERS = 5 
 
 
 @lru_cache(maxsize=1)
