@@ -1,4 +1,3 @@
-
 from functools import lru_cache
 from pathlib import Path
 
@@ -8,8 +7,7 @@ import recommendation_engine as engine
 
 DATA_DIR = Path(__file__).parent
 
-DEFAULT_TOP_USERS = 5 
-
+DEFAULT_TOP_USERS = 5  
 
 @lru_cache(maxsize=1)
 def _load_music_info() -> pd.DataFrame:
@@ -18,7 +16,7 @@ def _load_music_info() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def _track_lookup() -> pd.DataFrame:
-    """music_info indexed by track_id for fast enrichment lookups."""
+    """music_info indexed by track_id(for better lookups)"""
     df = _load_music_info()
     return df.set_index("track_id")
 
@@ -32,12 +30,12 @@ def get_song_count() -> int:
 
 
 def get_all_user_ids():
-    """Exposed so app.py can offer a 'pick a random real user' button."""
+    """helps the app.py to be able to pick random user"""
     return engine.get_all_user_ids()
 
 
 def user_listening_history(user_id: str) -> pd.DataFrame:
-    """Return the songs a given user has already listened to, with play counts."""
+    """this will return the songs a given user has already listened to, with play counts."""
     d = engine._load_all()
     user_to_idx = d["user_to_idx"]
     idx_to_track = d["idx_to_track"]
@@ -61,13 +59,6 @@ def user_listening_history(user_id: str) -> pd.DataFrame:
 def get_recommendations(
     user_id: str, top_n: int = 10, top_users: int = DEFAULT_TOP_USERS
 ) -> list[dict]:
-    """
-    See module docstring for the full contract.
-
-    Runs Member 2's real user-based collaborative filtering, then enriches
-    each result with genre/year/tags/spotify_preview_url from
-    music_info_clean.csv (their function doesn't return those fields).
-    """
     if not engine.user_exists(user_id):
         raise ValueError(f"user_id '{user_id}' was not found in user_ids.npy")
     if top_n <= 0:
@@ -88,9 +79,19 @@ def get_recommendations(
         track_id = r["track_id"]
         extra = lookup.loc[track_id] if track_id in lookup.index else None
 
-        genre = extra["genre"] if extra is not None and pd.notna(extra.get("genre")) else "Unkown"
-        year = int(extra["year"]) if extra is not None and pd.notna(extra.get("year")) else 0
-        tags = extra["tags"] if extra is not None and pd.notna(extra.get("tags")) else ""
+        genre = (
+            extra["genre"]
+            if extra is not None and pd.notna(extra.get("genre"))
+            else "Unkown"
+        )
+        year = (
+            int(extra["year"])
+            if extra is not None and pd.notna(extra.get("year"))
+            else 0
+        )
+        tags = (
+            extra["tags"] if extra is not None and pd.notna(extra.get("tags")) else ""
+        )
         preview_url = (
             extra["spotify_preview_url"]
             if extra is not None and pd.notna(extra.get("spotify_preview_url"))

@@ -52,11 +52,16 @@ def find_similar_users(user_id, top_n=5):
         print("User not found")
         return []
 
+    # Getting row index of the target user,targets listening data,the cosine similarity
     user_index = user_to_idx[user_id]
-     target_user = interaction_matrix[user_index]
+    target_user = interaction_matrix[user_index]
     similarities = cosine_similarity(target_user, interaction_matrix).flatten()
+
+    # Excluding the target user & Finding similar users indices
     similarities[user_index] = -1
     similar_indices = similarities.argsort()[::-1][:top_n]
+
+    # storing similar users and their similarity scores
     similar_users = []
 
     for index in similar_indices:
@@ -69,26 +74,34 @@ def recommend_songs(user_id, top_users=5, top_songs=5):
     d = _load_all()
     user_to_idx = d["user_to_idx"]
     interaction_matrix = d["interaction_matrix"]
+
+    # Checking if the user exists & Get similar users
     if user_id not in user_to_idx:
         print("User not found")
         return []
     similar_users = find_similar_users(user_id, top_n=top_users)
 
-  
+    # Getting the target user's row & Songs that the target user has listened to already
     user_index = user_to_idx[user_id]
     target_vector = interaction_matrix[user_index]
     listened_tracks = set(target_vector.indices)
+
+    # Storing the recommended songs
     recommendation_scores = {}
+
+    # Going through each similar user
     for similar_user_id, similarity_score in similar_users:
         similar_user_index = user_to_idx[similar_user_id]
         similar_user_vector = interaction_matrix[similar_user_index]
+
+        # Checking the song each similar user listened to & Skip songs the target user has already listened to
         for track_index, playcount in zip(
-            similar_user_vector.indices, similar_user_vector.data):
-                 
+            similar_user_vector.indices, similar_user_vector.data
+        ):
             if track_index in listened_tracks:
                 continue
 
-           
+            # Weighted recommended songs
             score = similarity_score * playcount
 
             if track_index in recommendation_scores:
@@ -96,7 +109,7 @@ def recommend_songs(user_id, top_users=5, top_songs=5):
             else:
                 recommendation_scores[track_index] = score
 
-
+    # Sorting the songs & Keeping only the top songs
     sorted_tracks = sorted(
         recommendation_scores.items(), key=lambda x: x[1], reverse=True
     )
@@ -109,7 +122,7 @@ def recommend_for_user(user_id, top_users=5, top_songs=5):
     idx_to_track = d["idx_to_track"]
     music_info = d["music_info"]
 
-    
+    # Ask for more candidates than we actually need
     recommendations = recommend_songs(
         user_id, top_users=top_users, top_songs=top_songs * 10
     )
@@ -131,6 +144,7 @@ def recommend_for_user(user_id, top_users=5, top_songs=5):
                 }
             )
 
+        # Stop once we have enough valid songs
         if len(song_details) == top_songs:
             break
 

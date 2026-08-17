@@ -1,21 +1,4 @@
-"""
-app.py — Ethical Music Recommendation Engine (Streamlit UI)
-=============================================================
-Member 4 (Interface & Integration) deliverable.
-
-Run with:
-    streamlit run app.py
-
-Expects these files in the SAME folder as this script:
-    - music_info_clean.csv
-    - interaction_matrix.npz
-    - .streamlit/config.toml  (theme colors — keep this folder alongside app.py)
-
-Integration point with Member 2:
-    See recommender_interface.py — that's the only file that needs to
-    change once the real collaborative-filtering model is ready.
-"""
-
+# This is the main file for the streamlit application
 import random
 
 import streamlit as st
@@ -30,19 +13,16 @@ from recommender_interface import (
     _load_music_info,
 )
 
-# ---------------------------------------------------------------------------
-# Page config
-# ---------------------------------------------------------------------------
+# Page configuration
 st.set_page_config(
     page_title="Music Recommender",
     page_icon="🎧",
     layout="wide",
 )
 
-# ---------------------------------------------------------------------------
-# Design tokens (black / green / blue / white palette, flat — no gradients)
-# ---------------------------------------------------------------------------
-ACCENTS = ["#00C853", "#1B7A43", "#66BB6A", "#2E7D32", "#A5D6A7"]  # all shades of green
+# Design tokens
+
+ACCENTS = ["#00C853", "#3B82F6", "#FFFFFF", "#1B7A43"]
 
 st.markdown(
     """
@@ -111,7 +91,7 @@ st.markdown(
         border-radius: 999px;
         font-size: 0.7rem;
         font-weight: 600;
-        color: #FFFFFF;
+        color: #000000;
     }
 
     /* mini equalizer, purely decorative */
@@ -166,9 +146,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---------------------------------------------------------------------------
-# Data load
-# ---------------------------------------------------------------------------
+# Data loading
+
 try:
     music_df = _load_music_info()
     n_users = get_user_count()
@@ -185,9 +164,8 @@ except FileNotFoundError as e:
 if not data_loaded:
     st.stop()
 
-# ---------------------------------------------------------------------------
-# Mood definitions — tied to REAL audio-feature columns, not just for show
-# ---------------------------------------------------------------------------
+# Mood Definitions
+
 MOODS = {
     "🎉 Hype": lambda df: (df["energy"] > 0.7) & (df["danceability"] > 0.6),
     "😌 Chill": lambda df: (df["energy"] < 0.4) & (df["acousticness"] > 0.3),
@@ -214,8 +192,8 @@ def render_song_card(song: dict, show_score: bool = False, key_prefix: str = "")
         st.markdown(
             f"""
             <div class="song-card">
-                <div class="song-title"><span class="eq"><span></span><span></span><span></span><span></span></span>{song.get('name', 'Unknown Title')}</div>
-                <div class="song-meta">{song.get('artist', 'Unknown Artist')} · {genre} · {year}</div>
+                <div class="song-title"><span class="eq"><span></span><span></span><span></span><span></span></span>{song.get("name", "Unknown Title")}</div>
+                <div class="song-meta">{song.get("artist", "Unknown Artist")} · {genre} · {year}</div>
                 {tag_html}
             </div>
             """,
@@ -223,7 +201,11 @@ def render_song_card(song: dict, show_score: bool = False, key_prefix: str = "")
         )
     with col2:
         preview_url = song.get("spotify_preview_url", "")
-        if preview_url and isinstance(preview_url, str) and preview_url.startswith("http"):
+        if (
+            preview_url
+            and isinstance(preview_url, str)
+            and preview_url.startswith("http")
+        ):
             st.audio(preview_url)
         else:
             st.caption("No preview available")
@@ -231,14 +213,12 @@ def render_song_card(song: dict, show_score: bool = False, key_prefix: str = "")
         st.caption(f"Match score: {song['score']:.2f} (based on similar listeners)")
 
 
-# ---------------------------------------------------------------------------
-# Tabs
-# ---------------------------------------------------------------------------
+# the tabs in the application
 tab_recs, tab_browse, tab_surprise = st.tabs(
     ["🎯 Recommendations", "📚 Browse Library", "🎲 Surprise Me"]
 )
 
-# --- Tab 1: Recommendations ------------------------------------------------
+# Tab 1: Recommendations
 with tab_recs:
     st.write(
         f"Dataset: **{n_users:,}** users · **{n_songs:,}** songs in the interaction matrix."
@@ -267,7 +247,9 @@ with tab_recs:
 
     col_c, col_d = st.columns([2, 1])
     with col_c:
-        top_n = st.slider("Number of recommendations", min_value=3, max_value=25, value=10)
+        top_n = st.slider(
+            "Number of recommendations", min_value=3, max_value=25, value=10
+        )
     with col_d:
         top_users = st.slider(
             "Similar users to consider",
@@ -296,7 +278,9 @@ with tab_recs:
     if st.button("🎵 Get Recommendations", type="primary"):
         try:
             with st.spinner("Finding listeners with similar taste..."):
-                recs = get_recommendations(user_id, int(top_n), top_users=int(top_users))
+                recs = get_recommendations(
+                    user_id, int(top_n), top_users=int(top_users)
+                )
         except ValueError as e:
             st.error(f"Invalid input: {e}")
         else:
@@ -311,11 +295,11 @@ with tab_recs:
                 for song in recs:
                     render_song_card(song, show_score=True)
 
-# --- Tab 2: Browse Library --------------------------------------------------
+# Tab 2: Browse Library
 with tab_browse:
     st.write("Search and explore the full song catalog.")
 
-    st.write("**Pick a vibe** (filters using real audio features — energy, valence, danceability, acousticness):")
+    st.write("**Pick a vibe**")
     mood_cols = st.columns(len(MOODS) + 1)
     if "mood" not in st.session_state:
         st.session_state.mood = "All"
@@ -336,9 +320,9 @@ with tab_browse:
 
     filtered = music_df.copy()
     if search_term:
-        mask = filtered["name"].str.contains(search_term, case=False, na=False) | filtered[
-            "artist"
-        ].str.contains(search_term, case=False, na=False)
+        mask = filtered["name"].str.contains(
+            search_term, case=False, na=False
+        ) | filtered["artist"].str.contains(search_term, case=False, na=False)
         filtered = filtered[mask]
     if genre_filter != "All":
         filtered = filtered[filtered["genre"] == genre_filter]
@@ -348,18 +332,24 @@ with tab_browse:
         (filtered["year"] >= year_range[0]) & (filtered["year"] <= year_range[1])
     ]
 
-    mood_label = f" · vibe: {st.session_state.mood}" if st.session_state.mood != "All" else ""
+    mood_label = (
+        f" · vibe: {st.session_state.mood}" if st.session_state.mood != "All" else ""
+    )
     st.caption(f"{len(filtered):,} songs match your filters{mood_label}.")
 
     if filtered.empty:
-        st.warning("No songs match those filters — try widening your search or picking a different vibe.")
+        st.warning(
+            "No songs match those filters — try widening your search or picking a different vibe."
+        )
     else:
         for _, row in filtered.head(30).iterrows():
             render_song_card(row.to_dict())
         if len(filtered) > 30:
-            st.caption(f"Showing first 30 of {len(filtered):,} results. Narrow your search to see more.")
+            st.caption(
+                f"Showing first 30 of {len(filtered):,} results. Narrow your search to see more."
+            )
 
-# --- Tab 3: Surprise Me -----------------------------------------------------
+# Tab 3: Surprise Me
 with tab_surprise:
     st.markdown(
         """
@@ -373,4 +363,5 @@ with tab_surprise:
 
     if st.button("🎲 Surprise me!", type="primary"):
         pick = music_df.sample(1).iloc[0].to_dict()
+        st.snow()
         render_song_card(pick)
